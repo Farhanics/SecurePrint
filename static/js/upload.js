@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const fileNameSpan = document.getElementById("file-name");
     const fileSizeSpan = document.getElementById("file-size");
     const copiesSelect = document.getElementById("copies-select");
+    const ttlSelect = document.getElementById("ttl-select");
     const encryptBtn = document.getElementById("encrypt-btn");
     const statusBox = document.getElementById("status-box");
     const statusMessage = document.getElementById("status-message");
@@ -20,7 +21,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const pinDisplay = document.getElementById("pin-display");
     const timerDisplay = document.getElementById("timer-display");
     const qrTarget = document.getElementById("qrcode-target");
+    const shareLinkInput = document.getElementById("share-link-input");
     const copyLinkBtn = document.getElementById("copy-link-btn");
+    const copyAllBtn = document.getElementById("copy-all-btn");
+    const whatsappBtn = document.getElementById("whatsapp-btn");
+    const openPrintBtn = document.getElementById("open-print-btn");
     const checkReceiptBtn = document.getElementById("check-receipt-btn");
 
     let selectedFile = null;
@@ -78,11 +83,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (file.type.startsWith("image/")) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                filePreview.innerHTML = `<img src="${e.target.result}" style="max-height: 120px; border-radius: 6px; margin-top: 8px;">`;
+                filePreview.innerHTML = `<img src="${e.target.result}" style="max-height: 80px; border-radius: 6px;">`;
             };
             reader.readAsDataURL(file);
         } else {
-            filePreview.innerHTML = `<div style="font-size: 2.5rem; margin-top: 8px;">📄</div>`;
+            filePreview.innerHTML = `<div style="font-size: 2rem;">📄</div>`;
         }
 
         previewArea.style.display = "block";
@@ -123,6 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
             formData.append("mime_type", selectedFile.type);
             formData.append("size", selectedFile.size.toString());
             formData.append("copies", copiesSelect.value);
+            formData.append("ttl_minutes", ttlSelect ? ttlSelect.value : "10");
 
             const response = await fetch("/api/upload", {
                 method: "POST",
@@ -137,7 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Zero out encrypted buffer
             SecureCrypto.wipeMemory(encryptedBytes);
 
-            // 5. Display success, QR, and PIN
+            // 5. Display success, QR, Shareable Link, and PIN
             showSuccess(data, keyBase64Url);
 
         } catch (err) {
@@ -149,7 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     function showSuccess(jobData, keyBase64Url) {
-        uploadForm.style.display = "none";
+        document.getElementById("upload-card").style.display = "none";
         statusBox.style.display = "none";
         resultCard.style.display = "block";
 
@@ -157,42 +163,73 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Build shop link with key in URL fragment (#)
         const shopUrl = `${window.location.origin}/shop#j=${encodeURIComponent(jobData.job_id)}&k=${encodeURIComponent(keyBase64Url)}`;
+        
+        // Populate share link input
+        if (shareLinkInput) {
+            shareLinkInput.value = shopUrl;
+        }
+
+        // WhatsApp Share Message
+        if (whatsappBtn) {
+            const shareText = `Assalam-o-Alaikum! Please print my secure document:\n\n🔗 Link: ${shopUrl}\n🔑 PIN: ${jobData.pin}\n\n(Auto-destructs after printing. No files stay on your PC).`;
+            whatsappBtn.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+        }
+
+        // Copy Link Button
+        if (copyLinkBtn) {
+            copyLinkBtn.onclick = () => {
+                navigator.clipboard.writeText(shopUrl).then(() => {
+                    const original = copyLinkBtn.textContent;
+                    copyLinkBtn.textContent = "Copied! ✔";
+                    setTimeout(() => copyLinkBtn.textContent = original, 2000);
+                }).catch(() => {
+                    prompt("Copy this link:", shopUrl);
+                });
+            };
+        }
+
+        // Copy Both Link & PIN Button
+        if (copyAllBtn) {
+            copyAllBtn.onclick = () => {
+                const combined = `Print Link: ${shopUrl}\nPIN: ${jobData.pin}\n(Expires in ${ttlSelect ? ttlSelect.value : 10} minutes)`;
+                navigator.clipboard.writeText(combined).then(() => {
+                    const original = copyAllBtn.textContent;
+                    copyAllBtn.textContent = "Link & PIN Copied! ✔";
+                    setTimeout(() => copyAllBtn.textContent = original, 2500);
+                }).catch(() => {
+                    prompt("Copy details:", combined);
+                });
+            };
+        }
+
+        // Direct Open in Print Page Button
+        if (openPrintBtn) {
+            openPrintBtn.href = shopUrl;
+        }
 
         // Render QR Code
         qrTarget.innerHTML = "";
         new QRCode(qrTarget, {
             text: shopUrl,
-            width: 220,
-            height: 220,
+            width: 200,
+            height: 200,
             colorDark: "#0f172a",
             colorLight: "#ffffff",
             correctLevel: QRCode.CorrectLevel.M
         });
 
-        // Copy link handler
-        copyLinkBtn.onclick = () => {
-            navigator.clipboard.writeText(shopUrl).then(() => {
-                copyLinkBtn.textContent = "Link Copied! ✔";
-                setTimeout(() => copyLinkBtn.textContent = "📋 Copy Shop Link", 2500);
-            }).catch(() => {
-                prompt("Copy this link:", shopUrl);
-            });
-        };
-
-        // Same PC Direct Open Link
-        const openShopBtn = document.getElementById("open-shop-btn");
-        if (openShopBtn) {
-            openShopBtn.href = shopUrl;
-            openShopBtn.style.display = "block";
+        // Receipt button
+        if (checkReceiptBtn) {
+            checkReceiptBtn.onclick = () => {
+                window.location.href = `/receipt/${jobData.job_id}`;
+            };
         }
 
-        // Receipt button
-        checkReceiptBtn.onclick = () => {
-            window.location.href = `/receipt/${jobData.job_id}`;
-        };
-
-        // Start 10 min countdown timer
+        // Start countdown timer with exact expires_at timestamp
         startCountdown(jobData.expires_at);
+
+        // Smooth scroll to result
+        resultCard.scrollIntoView({ behavior: "smooth" });
     }
 
     function startCountdown(expiresAtSeconds) {
@@ -202,18 +239,26 @@ document.addEventListener("DOMContentLoaded", () => {
             const now = Math.floor(Date.now() / 1000);
             const remaining = Math.max(0, Math.floor(expiresAtSeconds - now));
 
-            const mins = Math.floor(remaining / 60);
+            const hours = Math.floor(remaining / 3600);
+            const mins = Math.floor((remaining % 3600) / 60);
             const secs = remaining % 60;
-            timerDisplay.textContent = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+
+            if (hours > 0) {
+                timerDisplay.textContent = `${hours}h ${String(mins).padStart(2, "0")}m ${String(secs).padStart(2, "0")}s`;
+            } else {
+                timerDisplay.textContent = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+            }
 
             if (remaining <= 60) {
                 timerDisplay.parentElement.classList.add("urgent");
+            } else {
+                timerDisplay.parentElement.classList.remove("urgent");
             }
 
             if (remaining <= 0) {
                 clearInterval(countdownInterval);
                 timerDisplay.textContent = "EXPIRED";
-                alert("This print job has expired. The encrypted file was purged from the server.");
+                alert("This print job has expired. The encrypted file was securely purged from the server.");
             }
         }
 

@@ -433,6 +433,263 @@ tr:hover td {
     pointer-events: none;
 }
 
+/* Responsive Form & Share Components */
+.form-row-responsive {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1.25rem;
+}
+
+.file-preview-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #0b1120;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.share-box {
+    background: #0b1120;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-top: 1.5rem;
+    text-align: left;
+}
+
+.share-box-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.btn-whatsapp {
+    background: #25D366 !important;
+    color: #ffffff !important;
+    font-weight: 700;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    font-size: 1.05rem;
+    text-decoration: none;
+    padding: 0.85rem 1.25rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
+    transition: background 0.2s, transform 0.1s;
+    cursor: pointer;
+}
+
+.btn-whatsapp:hover {
+    background: #20ba5a !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+}
+
+.link-copy-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    align-items: stretch;
+}
+
+.link-copy-row input {
+    flex: 1;
+    font-size: 0.85rem;
+    font-family: monospace;
+    background: #1e293b;
+    color: #93c5fd;
+    border-color: var(--border);
+}
+
+.link-copy-row button {
+    white-space: nowrap;
+    padding: 0.6rem 1.2rem;
+}
+
+.action-buttons-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.action-buttons-grid .btn {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--border-highlight);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.85rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.btn-outline:hover {
+    background: #1e293b;
+    color: var(--text-primary);
+}
+
+.btn-nav {
+    background: #1e293b;
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    text-decoration: none;
+    padding: 0.4rem 0.85rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-nav:hover {
+    background: #334155;
+    color: #ffffff;
+}
+
+.terminal-unlock-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.pin-terminal-input {
+    letter-spacing: 0.25em;
+    font-family: monospace;
+    font-size: 1.4rem;
+    text-align: center;
+    font-weight: 700;
+    background: #0f172a;
+    border: 2px solid var(--accent);
+    color: #38bdf8;
+}
+
+.qr-options-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1.5rem 0 1rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+}
+
+.qr-options-divider::before,
+.qr-options-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--border);
+}
+
+.qr-options-divider span {
+    padding: 0 0.75rem;
+}
+
+.qr-actions-row {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.print-controls-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.print-actions-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   MOBILE RESPONSIVENESS ENHANCEMENTS (< 640px)
+   ========================================================================== */
+@media (max-width: 640px) {
+    .container {
+        padding: 0.75rem;
+    }
+
+    header {
+        padding: 0.75rem 1rem;
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: flex-start;
+    }
+
+    .nav-links {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .form-row-responsive {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .action-buttons-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .terminal-unlock-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .card {
+        padding: 1.25rem 1rem;
+    }
+
+    .pin-code {
+        font-size: 2.2rem;
+        letter-spacing: 0.2em;
+    }
+
+    .btn {
+        min-height: 46px;
+    }
+
+    .print-controls-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .print-actions-buttons {
+        width: 100%;
+    }
+
+    .print-actions-buttons button {
+        flex: 1;
+    }
+
+    .dropzone {
+        padding: 1.75rem 1rem;
+    }
+}
+
 /* Footer */
 footer {
     margin-top: auto;

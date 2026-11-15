@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shop Print Station | SecurePrint</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Printer Terminal | SecurePrint</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -11,14 +11,14 @@
         <a href="/" class="logo-area">
             <div class="logo-icon">🖨️</div>
             <div class="logo-text">
-                <h1>SecurePrint Shop</h1>
+                <h1>SecurePrint Terminal</h1>
                 <span class="urdu-sub">فوٹو کاپی شاپ پرنٹ ٹرمینل</span>
             </div>
         </a>
         <nav class="nav-links">
-            <span class="badge badge-success">👤 {{ shop_user }}</span>
-            <a href="{{ url_for('shop_dashboard') }}">📊 Audit Dashboard</a>
-            <a href="{{ url_for('shop_logout') }}" style="color: var(--accent-danger);">Logout</a>
+            <span class="badge badge-success">🛡️ Zero-Disk Storage</span>
+            <a href="/" class="btn-nav">+ Upload Document</a>
+            <a href="{{ url_for('shop_dashboard') }}" class="btn-nav">📊 Audit Log</a>
         </nav>
     </header>
 
@@ -26,16 +26,42 @@
         <!-- Control Card -->
         <div class="card no-print" id="scan-section">
             <h2 class="card-title">
-                <span>Scan Student QR or Enter Job Link</span>
+                <span>Unlock & Print Document</span>
             </h2>
             <p class="card-desc">
-                The file will be decrypted in memory only. No copy will be saved to this computer's hard drive or downloads folder.
+                Decrypted in RAM only. No files or images are ever saved to this computer's hard drive or downloads folder.
             </p>
 
-            <!-- QR Input Options: Image Upload or Webcam Scanner -->
-            <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1.25rem;">
-                <button type="button" id="upload-qr-btn" class="btn btn-primary" style="background: var(--accent-emerald);">
-                    🖼️ Upload QR Image / Screenshot
+            <!-- Status Banner -->
+            <div id="status-banner" style="display: none; margin-bottom: 1.25rem;">
+                <span id="status-text"></span>
+            </div>
+
+            <!-- PIN & Link Input Form -->
+            <div class="terminal-unlock-grid">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" for="pin-input">🔑 Enter Student's 6-Digit PIN:</label>
+                    <input type="text" id="pin-input" class="form-control pin-terminal-input" maxlength="6" placeholder="••••••" autofocus inputmode="numeric">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" for="link-input">🔗 Job Link or Token:</label>
+                    <input type="text" id="link-input" class="form-control" placeholder="Auto-fills from WhatsApp link or QR code">
+                </div>
+            </div>
+
+            <button type="button" id="load-btn" class="btn btn-primary btn-block" style="margin-top: 1.25rem; font-size: 1.05rem;">
+                ⚡ Decrypt & Render In-Memory
+            </button>
+
+            <!-- Alternative QR Scan Options Accordion/Toggles -->
+            <div class="qr-options-divider">
+                <span>OR SCAN WITH CAMERA / IMAGE</span>
+            </div>
+
+            <div class="qr-actions-row">
+                <button type="button" id="upload-qr-btn" class="btn btn-secondary">
+                    🖼️ Upload QR Screenshot
                 </button>
                 <button type="button" id="toggle-scanner-btn" class="btn btn-secondary">
                     📷 Open Webcam Scanner
@@ -43,50 +69,25 @@
                 <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
             </div>
 
-            <div style="text-align: center; font-size: 0.8rem; color: var(--text-muted); margin-top: -0.5rem; margin-bottom: 1rem;">
-                💡 <em>Tip: You can also drag & drop a QR screenshot onto this page, or press <strong>Ctrl+V</strong> to paste!</em>
-            </div>
-
             <div id="scanner-wrapper">
                 <video id="scanner-video" playsinline></video>
                 <div class="scanner-crosshair"></div>
-            </div>
-
-            <!-- Manual Link/PIN Inputs -->
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; align-items: flex-end;">
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label" for="link-input">Job Link or ID:</label>
-                    <input type="text" id="link-input" class="form-control" placeholder="Paste full link from student (e.g. https://.../shop#j=...&k=...)">
-                </div>
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label" for="pin-input">Student 6-Digit PIN:</label>
-                    <input type="text" id="pin-input" class="form-control" maxlength="6" placeholder="123456" style="letter-spacing: 0.15em; font-family: monospace; font-size: 1.1rem; text-align: center;">
-                </div>
-            </div>
-
-            <button type="button" id="load-btn" class="btn btn-primary btn-block" style="margin-top: 1.25rem;">
-                ⚡ Fetch, Decrypt & Render In-Memory
-            </button>
-
-            <!-- Status Banner -->
-            <div id="status-banner" style="display: none; margin-top: 1.25rem;">
-                <span id="status-text"></span>
             </div>
         </div>
 
         <!-- Print Action Controls (visible once decrypted) -->
         <div class="card no-print" id="print-controls" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div class="print-controls-header">
                 <div>
-                    <h3 id="job-info-text" style="color: var(--accent-emerald); font-size: 1.1rem;">
+                    <h3 id="job-info-text" style="color: var(--accent-emerald); font-size: 1.15rem; font-weight: 700;">
                         Document Decrypted in Memory ✔
                     </h3>
-                    <p style="color: var(--text-muted); font-size: 0.85rem;">
-                        Notice: Right-click is blocked. Diagonal watermark "FOR OFFICIAL USE ONLY" is added on each printed page.
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">
+                        Privacy Active: Right-click is blocked. "FOR OFFICIAL USE ONLY" print watermark is embedded.
                     </p>
                 </div>
-                <div style="display: flex; gap: 0.75rem;">
-                    <button type="button" id="print-btn" class="btn btn-success" style="font-size: 1.1rem; padding: 0.8rem 1.75rem;">
+                <div class="print-actions-buttons">
+                    <button type="button" id="print-btn" class="btn btn-success" style="font-size: 1.1rem; padding: 0.75rem 1.75rem;">
                         🖨️ Print Now
                     </button>
                     <button type="button" id="wipe-btn" class="btn btn-secondary">
@@ -101,7 +102,7 @@
     </main>
 
     <footer class="no-print">
-        <p>SecurePrint &copy; 2026 Cybersecurity Project &bull; Zero Disk Storage &bull; One-Time Fetch Enforcement</p>
+        <p>SecurePrint &copy; 2026 &bull; Zero Disk Storage &bull; One-Time Atomic Destruction Architecture</p>
     </footer>
 
     <!-- Libraries -->

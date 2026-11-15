@@ -19,7 +19,10 @@ def _safe_int_env(key: str, default: int) -> int:
     return int(digits) if digits else default
 
 # Application constants
-JOB_TTL_SECONDS = _safe_int_env("JOB_TTL_SECONDS", 600)  # 10 minutes default
+DEFAULT_TTL_MINUTES = 10
+MAX_TTL_MINUTES = 300  # 5 hours maximum
+MIN_TTL_MINUTES = 1
+JOB_TTL_SECONDS = _safe_int_env("JOB_TTL_SECONDS", DEFAULT_TTL_MINUTES * 60)
 MAX_UPLOAD_BYTES = _safe_int_env("MAX_UPLOAD_MB", 10) * 1024 * 1024  # 10 MB limit
 ALLOWED_MIME_TYPES = {
     "application/pdf",

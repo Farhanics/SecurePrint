@@ -148,10 +148,10 @@ def shop_logout():
     return redirect(url_for("shop_login"))
 
 @app.route("/shop")
-@shop_login_required
+@app.route("/print")
 def shop_page():
-    """Shop QR scan and print interface."""
-    return render_template("shop.html", shop_user=session.get("shop_user"))
+    """Shop QR scan and print interface (Public access - secured by client key & PIN)."""
+    return render_template("shop.html")
 
 @app.route("/shop/dashboard")
 @app.route("/dashboard")
@@ -222,6 +222,18 @@ def api_upload():
     with open(blob_path, "wb") as f:
         f.write(blob_data)
 
+    # Custom TTL countdown (max 5 hours = 300 minutes)
+    ttl_str = request.form.get("ttl_minutes", str(config.DEFAULT_TTL_MINUTES)).strip()
+    try:
+        ttl_minutes = int(ttl_str)
+        if ttl_minutes < config.MIN_TTL_MINUTES:
+            ttl_minutes = config.MIN_TTL_MINUTES
+        elif ttl_minutes > config.MAX_TTL_MINUTES:
+            ttl_minutes = config.MAX_TTL_MINUTES
+    except (ValueError, TypeError):
+        ttl_minutes = config.DEFAULT_TTL_MINUTES
+    ttl_seconds = ttl_minutes * 60
+
     job_entry = db.create_job(
         job_id=job_id,
         pin=pin,
@@ -229,7 +241,7 @@ def api_upload():
         mime_type=mime_type,
         size_bytes=size_bytes or blob_size,
         copies=copies,
-        ttl_seconds=config.JOB_TTL_SECONDS
+        ttl_seconds=ttl_seconds
     )
 
     return jsonify({
@@ -237,6 +249,7 @@ def api_upload():
         "job_id": job_id,
         "pin": pin,
         "expires_at": job_entry["expires_at"],
+        "ttl_seconds": ttl_seconds,
         "copies": job_entry["copies"]
     }), 201
 
@@ -272,7 +285,6 @@ def api_job_meta(job_id):
     })
 
 @app.route("/api/job/<job_id>/fetch", methods=["POST"])
-@shop_login_required
 @limiter.limit(config.RATE_LIMIT_META_FETCH)
 def api_job_fetch(job_id):
     """
@@ -320,7 +332,6 @@ def api_job_fetch(job_id):
     return response
 
 @app.route("/api/job/<job_id>/printed", methods=["POST"])
-@shop_login_required
 def api_job_printed(job_id):
     """Record pages printed after shop operator confirms browser printing."""
     data = request.get_json(silent=True) or request.form

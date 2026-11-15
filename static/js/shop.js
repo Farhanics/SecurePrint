@@ -270,6 +270,21 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    // Enter key & 6-digit auto-submit on PIN input
+    pinInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            loadBtn.click();
+        }
+    });
+
+    pinInput.addEventListener("input", () => {
+        const p = pinInput.value.trim();
+        if (p.length === 6 && (currentJobId || linkInput.value.trim())) {
+            loadBtn.click();
+        }
+    });
+
     // ==========================================
     // Load & Decrypt Button
     // ==========================================
@@ -309,7 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 throw new Error("Job is LOCKED (423). Too many incorrect PIN attempts.");
             }
             if (fetchRes.status === 401) {
-                throw new Error("Unauthorized (401). Please sign in to the shop station.");
+                throw new Error("Invalid request or unauthorized token.");
             }
             if (!fetchRes.ok) {
                 const errJson = await fetchRes.json().catch(() => ({}));
