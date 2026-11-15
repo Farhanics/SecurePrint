@@ -701,6 +701,71 @@ footer {
 }
 
 /* ==========================================================================
+   ANTI-SCREENSHOT & PRIVACY SHIELD STYLES
+   ========================================================================== */
+
+.privacy-shield-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(11, 15, 25, 0.96);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    z-index: 999999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #f8fafc;
+    text-align: center;
+    padding: 2rem;
+}
+
+.privacy-shield-overlay.active {
+    display: flex !important;
+}
+
+.privacy-shield-icon {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    animation: pulse 1s infinite;
+}
+
+.privacy-shield-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #ef4444;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.privacy-shield-desc {
+    font-size: 1rem;
+    color: #94a3b8;
+    margin-top: 0.75rem;
+    max-width: 460px;
+    line-height: 1.6;
+}
+
+/* Obfuscate Canvas when window is blurred or screenshot detected */
+body.window-blurred #render-container {
+    filter: blur(50px) brightness(0.1) !important;
+    pointer-events: none !important;
+    user-select: none !important;
+}
+
+/* Prevent image selection or dragging */
+#render-container, .page-canvas-wrapper, canvas {
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+}
+
+/* ==========================================================================
    PRINT SPECIFIC STYLES & DIAGONAL WATERMARK
    ========================================================================== */
 

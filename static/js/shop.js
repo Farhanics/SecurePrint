@@ -42,6 +42,86 @@ document.addEventListener("DOMContentLoaded", () => {
         showStatus("Right-click disabled to protect student privacy.", "warning");
     });
 
+    // ==========================================
+    // Anti-Screenshot & Screen Capture Protection
+    // ==========================================
+    const privacyShield = document.getElementById("privacy-shield");
+
+    function enablePrivacyShield() {
+        if (!rawDecryptedBytes) return; // only activate once document is decrypted in memory
+        document.body.classList.add("window-blurred");
+        if (privacyShield) {
+            privacyShield.classList.add("active");
+        }
+    }
+
+    function disablePrivacyShield() {
+        document.body.classList.remove("window-blurred");
+        if (privacyShield) {
+            privacyShield.classList.remove("active");
+        }
+    }
+
+    // 1. Detect Window Blur / Snipping Tool / Alt-Tab (triggers when snipping tool or recorder grabs focus)
+    window.addEventListener("blur", () => {
+        enablePrivacyShield();
+    });
+
+    window.addEventListener("focus", () => {
+        disablePrivacyShield();
+    });
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            enablePrivacyShield();
+        } else {
+            disablePrivacyShield();
+        }
+    });
+
+    // 2. Intercept PrintScreen key & wipe clipboard
+    window.addEventListener("keyup", (e) => {
+        if (e.key === "PrintScreen" || e.keyCode === 44) {
+            e.preventDefault();
+            enablePrivacyShield();
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText("Protected by SecurePrint - Screenshot capture prohibited.");
+            }
+            showStatus("⚠️ Screenshot attempt detected & blocked! Clipboard wiped.", "danger");
+            setTimeout(disablePrivacyShield, 2500);
+        }
+    });
+
+    // 3. Intercept save / devtools / inspect shortcuts
+    window.addEventListener("keydown", (e) => {
+        // Ctrl+S / Cmd+S (Save)
+        if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")) {
+            e.preventDefault();
+            showStatus("Saving document to disk is prohibited by Zero-Knowledge policy.", "warning");
+        }
+        // Ctrl+P / Cmd+P (Direct Browser Print - redirect to controlled watermarked print)
+        if ((e.ctrlKey || e.metaKey) && (e.key === "p" || e.key === "P")) {
+            e.preventDefault();
+            if (printBtn && printControls && printControls.style.display !== "none") {
+                printBtn.click();
+            }
+        }
+        // DevTools: F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U
+        if (
+            e.key === "F12" ||
+            ((e.ctrlKey || e.metaKey) && e.shiftKey && ["I", "J", "C", "i", "j", "c"].includes(e.key)) ||
+            ((e.ctrlKey || e.metaKey) && (e.key === "u" || e.key === "U"))
+        ) {
+            e.preventDefault();
+            showStatus("Developer tools are restricted during document viewing.", "warning");
+        }
+    });
+
+    // 4. Disable dragging of canvas/images
+    document.addEventListener("dragstart", (e) => {
+        e.preventDefault();
+    });
+
     // Check if URL has fragment on load (#j=...&k=...)
     parseUrlFragment();
 
