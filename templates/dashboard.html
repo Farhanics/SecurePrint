@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Audit Dashboard | SecurePrint</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <a href="/" class="logo-area">
+            <div class="logo-icon">🖨️</div>
+            <div class="logo-text">
+                <h1>SecurePrint Audit</h1>
+                <span class="urdu-sub">آڈٹ ڈیش بورڈ</span>
+            </div>
+        </a>
+        <nav class="nav-links">
+            <a href="{{ url_for('shop_page') }}">← Print Terminal</a>
+            <span class="badge badge-success">👤 {{ shop_user }}</span>
+            <a href="{{ url_for('shop_logout') }}" style="color: var(--accent-danger);">Logout</a>
+        </nav>
+    </header>
+
+    <main class="container wide-container">
+        <!-- Privacy Notice -->
+        <div class="notice-box">
+            <strong>🔒 Audit Log Privacy Compliance:</strong>
+            In accordance with zero-knowledge cybersecurity principles, this log records only operational metadata (timestamps, page counts, deletion verification). No filenames, student identities, or file contents are ever stored.
+        </div>
+
+        <!-- Metric Stat Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="card" style="margin-bottom: 0; text-align: center;">
+                <div style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Pages Printed Today</div>
+                <div id="stat-pages-today" style="font-size: 2.25rem; font-weight: 700; color: var(--accent-emerald);">-</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Billable print sheets</div>
+            </div>
+            <div class="card" style="margin-bottom: 0; text-align: center;">
+                <div style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Jobs Today</div>
+                <div id="stat-jobs-today" style="font-size: 2.25rem; font-weight: 700; color: #60a5fa;">-</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Customer uploads</div>
+            </div>
+            <div class="card" style="margin-bottom: 0; text-align: center;">
+                <div style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Total Completed</div>
+                <div id="stat-completed" style="font-size: 2.25rem; font-weight: 700; color: #a78bfa;">-</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Successfully printed</div>
+            </div>
+            <div class="card" style="margin-bottom: 0; text-align: center;">
+                <div style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">All-Time Jobs</div>
+                <div id="stat-total" style="font-size: 2.25rem; font-weight: 700; color: var(--text-primary);">-</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Lifetime requests</div>
+            </div>
+        </div>
+
+        <!-- Activity Table Card -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 class="card-title" style="margin-bottom: 0;">Recent Print Jobs & Deletion Status</h2>
+                <button type="button" id="refresh-btn" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                    🔄 Refresh Log
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Job Token</th>
+                            <th>Format</th>
+                            <th>Copies</th>
+                            <th>Pages</th>
+                            <th>Status</th>
+                            <th>Server Purge Proof</th>
+                        </tr>
+                    </thead>
+                    <tbody id="jobs-tbody">
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                                Loading audit records...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>SecurePrint Audit System &bull; University Cybersecurity Project</p>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const refreshBtn = document.getElementById("refresh-btn");
+            const tbody = document.getElementById("jobs-tbody");
+
+            const statPagesToday = document.getElementById("stat-pages-today");
+            const statJobsToday = document.getElementById("stat-jobs-today");
+            const statCompleted = document.getElementById("stat-completed");
+            const statTotal = document.getElementById("stat-total");
+
+            async function loadDashboard() {
+                try {
+                    const res = await fetch("/api/dashboard/stats");
+                    if (!res.ok) throw new Error("Failed to load statistics");
+                    const data = await res.json();
+
+                    // Update stats
+                    statPagesToday.textContent = data.stats.pages_today || 0;
+                    statJobsToday.textContent = data.stats.jobs_today || 0;
+                    statCompleted.textContent = data.stats.printed_jobs || 0;
+                    statTotal.textContent = data.stats.total_jobs || 0;
+
+                    // Update table
+                    tbody.innerHTML = "";
+                    if (!data.recent_jobs || data.recent_jobs.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No jobs recorded yet.</td></tr>`;
+                        return;
+                    }
+
+                    data.recent_jobs.forEach(job => {
+                        const tr = document.createElement("tr");
+
+                        const timeStr = new Date(job.created_at * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                        const dateStr = new Date(job.created_at * 1000).toLocaleDateString();
+
+                        let statusBadge = '<span class="badge">Uploaded</span>';
+                        if (job.status === "printed") statusBadge = '<span class="badge badge-success">Printed ✔</span>';
+                        else if (job.status === "deleted") statusBadge = '<span class="badge badge-warning">Purged</span>';
+                        else if (job.status === "expired") statusBadge = '<span class="badge badge-danger">Expired</span>';
+                        else if (job.status === "locked") statusBadge = '<span class="badge badge-danger">Locked 🔒</span>';
+
+                        const maskedId = job.id.substring(0, 6) + "..." + job.id.substring(job.id.length - 4);
+                        const formatShort = job.mime_type.split("/")[1]?.toUpperCase() || "BIN";
+
+                        let purgeText = "Holding (Unfetched)";
+                        if (job.deleted_at) {
+                            const delTime = new Date(job.deleted_at * 1000).toLocaleTimeString();
+                            purgeText = `<span style="color: var(--accent-emerald);">✔ Purged at ${delTime}</span>`;
+                        }
+
+                        tr.innerHTML = `
+                            <td><div style="font-weight: 500;">${timeStr}</div><div style="font-size: 0.75rem; color: var(--text-muted);">${dateStr}</div></td>
+                            <td><code>${maskedId}</code></td>
+                            <td>${formatShort}</td>
+                            <td>${job.copies}</td>
+                            <td><strong>${job.pages_printed !== null ? job.pages_printed : '-'}</strong></td>
+                            <td>${statusBadge}</td>
+                            <td>${purgeText}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } catch (err) {
+                    console.error("Dashboard error:", err);
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--accent-danger); padding: 1rem;">Failed to load audit records.</td></tr>`;
+                }
+            }
+
+            refreshBtn.addEventListener("click", loadDashboard);
+            loadDashboard();
+            setInterval(loadDashboard, 15000);
+        });
+    </script>
+</body>
+</html>

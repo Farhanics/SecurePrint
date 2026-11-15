@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deletion Proof Receipt | SecurePrint</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <a href="/" class="logo-area">
+            <div class="logo-icon">🖨️</div>
+            <div class="logo-text">
+                <h1>SecurePrint Receipt</h1>
+                <span class="urdu-sub">فائل ڈیلیشن کا ثبوت</span>
+            </div>
+        </a>
+        <nav class="nav-links">
+            <a href="/">+ New Print Job</a>
+        </nav>
+    </header>
+
+    <main class="container" style="max-width: 600px;">
+        <div class="card" style="text-align: center;">
+            <div id="receipt-loading" style="padding: 2rem;">
+                <span style="font-size: 2rem; animation: pulse 1s infinite;">⏳</span>
+                <p style="margin-top: 0.5rem; color: var(--text-secondary);">Querying server audit ledger...</p>
+            </div>
+
+            <div id="receipt-content" style="display: none; text-align: left;">
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <div id="status-icon" style="font-size: 3rem;">🛡️</div>
+                    <h2 id="receipt-heading" class="card-title" style="justify-content: center; margin-top: 0.5rem;">
+                        Audit Receipt
+                    </h2>
+                    <span id="receipt-badge" class="badge">Checking...</span>
+                </div>
+
+                <div class="pin-box" style="margin-bottom: 1.5rem; background: #0f172a; border-color: var(--border);">
+                    <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Job Identifier</div>
+                    <div style="font-family: monospace; font-size: 1.1rem; color: #60a5fa; margin-top: 0.25rem;">
+                        {{ job_id }}
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.95rem;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+                        <span style="color: var(--text-secondary);">Server File Status:</span>
+                        <strong id="r-deletion-status" style="color: var(--accent-emerald);">Verified Purged ✔</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+                        <span style="color: var(--text-secondary);">Copies Configured:</span>
+                        <strong id="r-copies">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+                        <span style="color: var(--text-secondary);">Pages Printed:</span>
+                        <strong id="r-pages">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+                        <span style="color: var(--text-secondary);">Upload Timestamp:</span>
+                        <span id="r-created" style="color: var(--text-primary);">-</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+                        <span style="color: var(--text-secondary);">Deletion / Purge Time:</span>
+                        <span id="r-deleted" style="color: var(--text-primary);">-</span>
+                    </div>
+                </div>
+
+                <div class="notice-box" style="margin-top: 1.5rem;">
+                    <strong>🎓 Cryptographic Verification:</strong><br>
+                    Because your 256-bit AES key was never transmitted to our server and the encrypted ciphertext was permanently overwritten upon print, <em>no party (including the shop or server administrator) can ever reconstruct your document.</em>
+                </div>
+
+                <div style="margin-top: 1.5rem;">
+                    <a href="/" class="btn btn-primary btn-block">Print Another Document</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>SecurePrint &copy; 2026 Cybersecurity Project</p>
+    </footer>
+
+    <script>
+        const jobId = "{{ job_id }}";
+        let pollTimer = null;
+
+        async function fetchReceipt() {
+            try {
+                const res = await fetch(`/api/receipt/${encodeURIComponent(jobId)}`);
+                if (!res.ok) throw new Error("Receipt not found");
+                const data = await res.json();
+
+                document.getElementById("receipt-loading").style.display = "none";
+                document.getElementById("receipt-content").style.display = "block";
+
+                document.getElementById("r-copies").textContent = data.copies || 1;
+                document.getElementById("r-pages").textContent = data.pages_printed !== null ? data.pages_printed : "Pending Print";
+                document.getElementById("r-created").textContent = new Date(data.created_at * 1000).toLocaleTimeString();
+
+                const rDel = document.getElementById("r-deletion-status");
+                const rDelTime = document.getElementById("r-deleted");
+                const badge = document.getElementById("receipt-badge");
+                const icon = document.getElementById("status-icon");
+
+                if (data.deleted) {
+                    rDel.innerHTML = `<span style="color: var(--accent-emerald);">Permanently Purged from Server Disk ✔</span>`;
+                    rDelTime.textContent = data.deleted_at ? new Date(data.deleted_at * 1000).toLocaleTimeString() : "Immediately on fetch";
+                    badge.className = "badge badge-success";
+                    badge.textContent = data.status === "printed" ? "Printed & Destroyed ✔" : "Destroyed ✔";
+                    icon.textContent = "🗑️";
+                    if (pollTimer) clearInterval(pollTimer);
+                } else {
+                    rDel.innerHTML = `<span style="color: #fbbf24;">Encrypted in Temporary Memory (Pending Print)</span>`;
+                    rDelTime.textContent = "Awaiting shop fetch";
+                    badge.className = "badge badge-warning";
+                    badge.textContent = "In Queue (Unfetched)";
+                    icon.textContent = "⏳";
+                }
+            } catch (e) {
+                console.error("Receipt fetch error:", e);
+            }
+        }
+
+        fetchReceipt();
+        pollTimer = setInterval(fetchReceipt, 4000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecurePrint | Privacy-First Printing for Students</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <a href="/" class="logo-area">
+            <div class="logo-icon">🖨️</div>
+            <div class="logo-text">
+                <h1>SecurePrint</h1>
+                <span class="urdu-sub">محفوظ پرنٹنگ — زیرو ڈیٹا اسٹوریج</span>
+            </div>
+        </a>
+        <nav class="nav-links">
+            <span class="badge badge-success">🔒 E2E Encrypted</span>
+            <a href="{{ url_for('shop_page') }}" target="_blank">Shop Portal →</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <!-- Privacy Guarantee Banner -->
+        <div class="notice-box">
+            <strong>🛡️ Zero-Knowledge Guarantee:</strong>
+            Your document is encrypted on your device (AES-256-GCM) <em>before</em> upload.
+            The server cannot read it, the decryption key never touches the server, and the file is permanently deleted immediately after printing.
+        </div>
+
+        <!-- Student Upload Card -->
+        <div class="card" id="upload-card">
+            <h2 class="card-title">
+                <span>Upload Document</span>
+                <span class="badge">Max {{ max_mb }} MB</span>
+            </h2>
+            <p class="card-desc">PDF, CNIC scans, or document photos. No files stay on shop computers.</p>
+
+            <form id="upload-form">
+                <!-- Dropzone -->
+                <div class="dropzone" id="dropzone">
+                    <div class="dropzone-icon">📁</div>
+                    <div class="dropzone-title">Tap to pick file or drop here</div>
+                    <div class="dropzone-sub">Accepts PDF, JPG, PNG (Supports camera capture)</div>
+                    <input type="file" id="file-input" accept="application/pdf,image/jpeg,image/png" style="display: none;">
+                </div>
+
+                <!-- Preview Area -->
+                <div id="preview-area" style="display: none; margin: 1.25rem 0;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; background: #0f172a; padding: 0.75rem 1rem; border-radius: 8px;">
+                        <div>
+                            <strong id="file-name">filename.pdf</strong>
+                            <span id="file-size" style="color: var(--text-muted); font-size: 0.85rem; margin-left: 0.5rem;"></span>
+                        </div>
+                        <div id="file-preview"></div>
+                    </div>
+                </div>
+
+                <!-- Copies Selector -->
+                <div class="form-group" style="margin-top: 1.25rem;">
+                    <label class="form-label" for="copies-select">Number of Copies (1 - 5):</label>
+                    <select id="copies-select" class="form-control" style="max-width: 150px;">
+                        <option value="1" selected>1 Copy</option>
+                        <option value="2">2 Copies</option>
+                        <option value="3">3 Copies</option>
+                        <option value="4">4 Copies</option>
+                        <option value="5">5 Copies</option>
+                    </select>
+                </div>
+
+                <!-- Encrypt & Upload Button -->
+                <button type="submit" id="encrypt-btn" class="btn btn-primary btn-block" disabled>
+                    🔒 Encrypt & Generate Print Code
+                </button>
+            </form>
+
+            <!-- Loading status -->
+            <div id="status-box" style="display: none; margin-top: 1.25rem;" class="notice-box">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="font-size: 1.3rem; animation: pulse 1s infinite;">⏳</span>
+                    <span id="status-message">Encrypting on your device...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Card (shown after encryption) -->
+        <div class="card" id="result-card" style="display: none; text-align: center;">
+            <h2 class="card-title" style="justify-content: center; color: var(--accent-emerald);">
+                <span>Ready to Print!</span>
+            </h2>
+            <p class="card-desc">Show this QR code or 6-digit PIN to the photocopy shop operator.</p>
+
+            <!-- QR Code Container -->
+            <div class="qr-container">
+                <div id="qrcode-target"></div>
+            </div>
+
+            <!-- PIN Code Box -->
+            <div class="pin-box">
+                <div style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em;">
+                    Your 6-Digit PIN
+                </div>
+                <div class="pin-code" id="pin-display">------</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                    Shop operator must enter this PIN to unlock the print job.
+                </div>
+            </div>
+
+            <!-- Countdown Timer -->
+            <div class="timer-box">
+                <span>⏱️ Self-Destruct in:</span>
+                <span id="timer-display">10:00</span>
+            </div>
+
+            <!-- Actions -->
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="button" id="copy-link-btn" class="btn btn-secondary btn-block">
+                    📋 Copy Shop Link
+                </button>
+                <a id="open-shop-btn" class="btn btn-secondary btn-block" target="_blank" style="display: none; background: #1e3a8a; border-color: #3b82f6;">
+                    🖨️ Open in Shop Terminal (Same PC Demo) →
+                </a>
+                <button type="button" id="check-receipt-btn" class="btn btn-primary btn-block">
+                    🧾 Verify File Deletion Proof (Receipt)
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>SecurePrint &copy; 2026 Cybersecurity Final Year Project &bull; Zero-Knowledge AES-256-GCM Architecture</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/lib/qrcode.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/crypto.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+</body>
+</html>

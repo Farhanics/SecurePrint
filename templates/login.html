@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Login | SecurePrint</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <a href="/" class="logo-area">
+            <div class="logo-icon">🖨️</div>
+            <div class="logo-text">
+                <h1>SecurePrint</h1>
+                <span class="urdu-sub">شاپ لاگ ان</span>
+            </div>
+        </a>
+        <nav class="nav-links">
+            <a href="/">← Student Upload</a>
+        </nav>
+    </header>
+
+    <main class="container" style="max-width: 450px; margin-top: 2rem;">
+        <div class="card">
+            <h2 class="card-title">Shop Operator Login</h2>
+            <p class="card-desc">Sign in to print student documents securely without disk retention.</p>
+
+            {% if error %}
+            <div class="notice-box badge-danger" style="margin-bottom: 1.25rem;">
+                <strong>⚠️ Error:</strong> {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('shop_login') }}">
+                <div class="form-group">
+                    <label class="form-label" for="username">Username</label>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="shopadmin" required autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1.5rem;">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="notice-box" style="margin-top: 1.5rem; font-size: 0.8rem;">
+                <strong>Demo Credentials:</strong><br>
+                Username: <code>shopadmin</code><br>
+                Password: <code>shop123_ChangeMe!</code>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>SecurePrint &bull; University Cybersecurity Project</p>
+    </footer>
+</body>
+</html>

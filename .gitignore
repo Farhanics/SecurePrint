@@ -1,0 +1,9 @@
+# SecurePrint - Git Ignore
+storage/*.bin
+*.db
+.env
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.DS_Store
+Thumbs.db
